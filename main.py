@@ -1,11 +1,15 @@
 from pandas import DataFrame
 
 from leaderboard_v2.constants.text_blobs import ABOUT_SEAHELM, ADDITIONAL_INFORMATION, ABOUT_AISG, SCORE_CALCULATION
-from leaderboard_v2.plots.table_view import table_view
+from leaderboard_v2.plots.contour_plot import contour_plot_tab
+
+from .plots.pareto_plot import pareto_plot_tab
+from .plots.table_view import table_view
+from .plots.delta_comparison import delta_comparison_tab
+
 from leaderboard_v2.utils import process_runs, load_config, TabBuilder
 
 from .constants.constants import LANGUAGE_NAMES
-from .plots.delta_comparison import delta_comparison_tab
 import gradio as gr
 slider_css = """
         .gradio-container .form {
@@ -73,6 +77,8 @@ def create_main_tabs(results_dict: dict[str, dict[str, DataFrame]],):
     experiment_tab_structure = [
         delta_comparison_tab,
         table_view,
+        pareto_plot_tab,
+        contour_plot_tab
     ]
     experiments = get_experiments_only(results_dict)
     experiment_tabs = [

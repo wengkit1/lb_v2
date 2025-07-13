@@ -1,5 +1,4 @@
 import gradio as gr
-import pandas as pd
 from pandas import DataFrame
 from gradio_leaderboard import Leaderboard, SelectColumns, SearchColumns, ColumnFilter
 from ..utils import TabBuilder
@@ -82,7 +81,7 @@ def create_single_language_tab(lang_name, lang_cols, df_display: DataFrame):
 def create_language_breakdown_tab(df_display: DataFrame, lang_groups):
     """Create language breakdown tab with nested language tabs."""
 
-    def language_breakdown_func(data):
+    def language_breakdown_func(unused):
         language_tab_functions = []
         for lang_name, lang_cols in lang_groups.items():
             tab_func = create_single_language_tab(lang_name, lang_cols, df_display)

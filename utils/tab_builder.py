@@ -1,5 +1,6 @@
 from typing import List, Union, Callable, Dict, Any, Optional
 import gradio as gr
+from pandas.core.interchange.dataframe_protocol import DataFrame
 
 
 class TabBuilder:
@@ -15,7 +16,7 @@ class TabBuilder:
         self.shared_state = shared_state or {}
 
 
-    def build(self, data: Optional[dict[str, Any]] = None) -> None:
+    def build(self, data: Optional[Union[DataFrame ,dict[str, Any]]] = None) -> None:
         """Build all tabs in list with optional shared_state"""
         with gr.Tabs():
             for tab in self.tabs:
