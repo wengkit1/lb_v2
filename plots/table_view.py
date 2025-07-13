@@ -38,7 +38,7 @@ def group_columns_by_language(df: DataFrame):
 def create_single_language_tab(lang_name, lang_cols, df_display: DataFrame):
     """Create a single language tab with filtered columns."""
 
-    def language_tab_func(data):
+    def language_tab_func(data, shared_state):
         with gr.Tab(lang_name):
             # Filter to model column + language-specific columns
             subset_cols = ['model'] + lang_cols
@@ -95,7 +95,7 @@ def create_language_breakdown_tab(df_display: DataFrame, lang_groups):
     return language_breakdown_func
 
 
-def overall_tab(exp_data: dict = None):
+def overall_tab(exp_data: dict):
     with gr.Tab("Overall"):
         df = exp_data.get('lang', None)
         if df is None or df.empty:
@@ -113,23 +113,27 @@ def overall_tab(exp_data: dict = None):
                     ColumnFilter(col, type="slider", label=col)
                 )
 
+        select_columns_component = SelectColumns(
+            default_selection=select_columns,
+            cant_deselect=["model"] if "model" in select_columns else []
+        )
+
+        search_columns_component = SearchColumns(
+            primary_column="model" if "model" in df_display.columns else df_display.columns[0],
+            secondary_columns=[],
+            placeholder="Search by model name",
+            label="Search",
+        )
+
         Leaderboard(
             value=df_display,
-            select_columns=SelectColumns(
-                default_selection=select_columns,
-                cant_deselect=["model"] if "model" in select_columns else []
-            ),
-            search_columns=SearchColumns(
-                primary_column="model" if "model" in df_display.columns else df_display.columns[0],
-                secondary_columns=[],
-                placeholder="Search by model name",
-                label="Search",
-            ),
+            select_columns=select_columns_component,
+            search_columns=search_columns_component,
             filter_columns=filter_columns,
         )
 
 
-def competency_tab(exp_data: dict = None,):
+def competency_tab(exp_data: dict = None):
     df = exp_data.get('competency')
     with gr.Tab("Competency"):
         if df is None or df.empty:

@@ -1,27 +1,33 @@
-from typing import List, Union, Callable, Dict, Any
+from typing import List, Union, Callable, Dict, Any, Optional
 import gradio as gr
+
 
 class TabBuilder:
     """Tab builder that builds list of tab which are tab builders or tab functions"""
 
-    def __init__(self, tabs: List[Union[Callable, 'TabBuilder']]):
+    def __init__(self, tabs: List[Union[Callable, 'TabBuilder']], shared_state: Dict[str, Any] = None):
         """
         Args:
             tabs: List of tab callables or other TabBuilder objects
+            shared_state: Optional shared state dict that gets passed to all tabs
         """
         self.tabs = tabs
+        self.shared_state = shared_state or {}
 
-    def build(self, data: Dict[str, Any]) -> None:
-        """Build all tabs according to the structure"""
+
+    def build(self, data: Optional[dict[str, Any]] = None) -> None:
+        """Build all tabs in list with optional shared_state"""
         with gr.Tabs():
             for tab in self.tabs:
                 if isinstance(tab, TabBuilder):
-                    # Another TabBuilder - let it handle its own tabs
+                    tab.shared_state = self.shared_state
                     tab.build(data)
                 elif callable(tab):
-                    # Single tab function
-                    tab(data)
+                    import inspect
+                    sig = inspect.signature(tab)
+                    params = list(sig.parameters.keys())
 
-    def __call__(self, data: Dict[str, Any]) -> None:
-        """Make TabBuilder itself callable as a tab"""
-        self.build(data)
+                    if len(params) >= 2:
+                        tab(data, self.shared_state)
+                    else:
+                        tab(data)

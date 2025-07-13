@@ -13,7 +13,7 @@ slider_css = """
             max-height: 800px !important;
         }
         """
-
+dynamic_average_js = f"function() {{ {open('leaderboard_v2/js/dynamic_averages.js').read()} }}"
 
 def clean_column_names(df_dict: dict[str, DataFrame]):
     """Apply language name mapping to dataframe columns for all parts of df_dict"""
@@ -58,7 +58,7 @@ def get_experiments_only(results):
 
 def create_experiment_tab_function(exp_name, exp_data, tab_structure):
     """Factory function that returns a tab function for a specific experiment"""
-    def experiment_tab_func(unused):
+    def experiment_tab_func(unused, shared_state=None):
         with gr.Tab(exp_name):
             filtered_data = {k: v for k, v in list(exp_data.items())[:-1]}
             cleaned_data = clean_column_names(filtered_data)
@@ -80,11 +80,11 @@ def create_main_tabs(results_dict: dict[str, dict[str, DataFrame]],):
         for exp_name, exp_data in experiments.items()
     ]
     main_builder = TabBuilder(experiment_tabs)
-    main_builder.build({})
+    main_builder.build()
 
 def create_gradio_app(results_dict):
     """Main entry point - create the Gradio app"""
-    with gr.Blocks(css=slider_css) as demo:
+    with gr.Blocks(css=slider_css, js=dynamic_average_js) as demo:
         gr.Markdown("<br>")
         gr.Markdown(
             "<h1 style='margin: 0; padding: 0; font-size: 2.5em;'>🌏 SEA HELM (Internal)</h1>"
