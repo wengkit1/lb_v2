@@ -202,19 +202,19 @@ def create_delta_comparison_plot(exp_data: dict, df_type: str = "lang"):
 
 def language_performance_tab(exp_data: dict):
     """Language-level comparison tab"""
-    with gr.Tab("Language Performance"):
+    with gr.Tab("Language"):
         create_delta_comparison_plot(exp_data, "lang")
 
 
 def competency_performance_tab(exp_data: dict):
     """Competency-level comparison tab"""
-    with gr.Tab("Competency Performance"):
+    with gr.Tab("Competency"):
         create_delta_comparison_plot(exp_data, "competency")
 
 
 def task_performance_tab(exp_data: dict):
     """Task-level comparison tab"""
-    with gr.Tab("Task Performance"):
+    with gr.Tab("Task"):
         create_delta_comparison_plot(exp_data, "task")
 
 

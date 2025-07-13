@@ -1,11 +1,18 @@
 from pandas import DataFrame
 
+from leaderboard_v2.constants.text_blobs import ABOUT_SEAHELM, ADDITIONAL_INFORMATION, ABOUT_AISG, SCORE_CALCULATION
+from leaderboard_v2.plots.table_view import table_view
 from leaderboard_v2.utils import process_runs, load_config, TabBuilder
 
 from .constants.constants import LANGUAGE_NAMES
 from .plots.delta_comparison import delta_comparison_tab
 import gradio as gr
-
+slider_css = """
+        .gradio-container .form {
+            overflow-y: auto !important;
+            max-height: 800px !important;
+        }
+        """
 
 
 def clean_column_names(df_dict: dict[str, DataFrame]):
@@ -19,18 +26,17 @@ def clean_column_names(df_dict: dict[str, DataFrame]):
             continue
 
         df_copy = df.copy()
-
+        columns = {k.lower(): v for k, v in LANGUAGE_NAMES.items()}
         if key == 'lang':
-            df_copy = df_copy.rename(columns={k.lower(): v for k, v in LANGUAGE_NAMES.items()})
-            print(df_copy.columns)
+            df_copy = df_copy.rename(columns=columns)
         elif key in ['competency', 'task']:
             column_mapping = {}
             for col in df_copy.columns:
                 if '_' in col:
                     lang_code, rest = col.split('_', 1)
-                    if lang_code in LANGUAGE_NAMES:
+                    if lang_code in columns:
                         # Replace language code with full name
-                        new_col = f"{LANGUAGE_NAMES[lang_code]}_{rest}"
+                        new_col = f"{columns[lang_code]}_{rest}"
                         column_mapping[col] = new_col
                     else:
                         column_mapping[col] = col
@@ -63,21 +69,53 @@ def create_experiment_tab_function(exp_name, exp_data, tab_structure):
     return experiment_tab_func
 
 
+def create_main_tabs(results_dict: dict[str, dict[str, DataFrame]],):
+    experiment_tab_structure = [
+        delta_comparison_tab,
+        table_view,
+    ]
+    experiments = get_experiments_only(results_dict)
+    experiment_tabs = [
+        create_experiment_tab_function(exp_name, exp_data, experiment_tab_structure)
+        for exp_name, exp_data in experiments.items()
+    ]
+    main_builder = TabBuilder(experiment_tabs)
+    main_builder.build({})
+
 def create_gradio_app(results_dict):
     """Main entry point - create the Gradio app"""
-    with gr.Blocks(title="Model Evaluation Dashboard") as demo:
-        gr.Markdown("# Model Evaluation Dashboard")
-        experiment_tab_structure = [
-            delta_comparison_tab,
-        ]
-        experiments = get_experiments_only(results_dict)
-        experiment_tabs = [
-            create_experiment_tab_function(exp_name, exp_data, experiment_tab_structure)
-            for exp_name, exp_data in experiments.items()
-        ]
+    with gr.Blocks(css=slider_css) as demo:
+        gr.Markdown("<br>")
+        gr.Markdown(
+            "<h1 style='margin: 0; padding: 0; font-size: 2.5em;'>🌏 SEA HELM (Internal)</h1>"
+        )
 
-        main_builder = TabBuilder(experiment_tabs)
-        main_builder.build({})
+        with gr.Row():
+            with gr.Column(scale=3):
+                gr.Markdown(ABOUT_SEAHELM)
+            with gr.Column(scale=1):
+                gr.Markdown(
+                    "<div style='text-align: right;'>Hosted by the AI Products Team @ AI Singapore</div>"
+                )
+        gr.Markdown("<br>")
+
+        create_main_tabs(results_dict)
+
+        gr.Markdown("<br>")
+        with gr.Accordion("📚 Additional Information", open=False):
+            gr.Markdown("<hr>")
+            for text in ADDITIONAL_INFORMATION:
+                gr.Markdown(text)
+
+        with gr.Accordion("🔢 Score Calculation Details", open=False):
+            gr.Markdown("<hr>")
+            for text in SCORE_CALCULATION:
+                gr.Markdown(text)
+
+        with gr.Accordion("🦁 AI Singapore & SEA-LION", open=False):
+            gr.Markdown("<hr>")
+            for text in ABOUT_AISG:
+                gr.Markdown(text)
 
     return demo
 
