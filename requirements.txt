@@ -1,0 +1,5 @@
+gradio>=5.33.0
+gradio-leaderboard>=0.0.13
+matplotlib>=3.10.3
+plotly>=6.1.2
+scipy>=1.15.3
