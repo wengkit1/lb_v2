@@ -10,15 +10,15 @@ def style_delta_df(
         bold_models=True,
         exclude_columns: list[str] | None = None,
 ):
-    """Style DataFrame for delta comparison.
+    """style DataFrame for delta comparison.
 
     Args:
         original_df (pandas.DataFrame): DataFrame to style.
-        delta_model (str): Name of model to use for delta comparison.
-        precision (int, optional): Number precision. Defaults to 1.
-        bold_models (bool, optional): Whether to bold the delta model. Defaults to True.
+        delta_model (str): Name of the model used for delta comparison.
+        precision (int, optional): Number precision. defaults to 1.
+        bold_models (bool, optional): Whether to bold the delta model. defaults to True.
         exclude_columns (list[str] | None, optional): Columns to exclude from delta
-            highlighting. Defaults to None.
+            highlighting. defaults to None.
 
     Returns:
         Styled dataframe
@@ -111,7 +111,7 @@ def style_delta_df(
 
 
 def get_baseline_models(df: pd.DataFrame) -> list[str]:
-    """Extract baseline model names from DataFrame index.
+    """Extract baseline model names from the DataFrame index.
 
     Args:
         df: DataFrame with model names as index
@@ -123,7 +123,7 @@ def get_baseline_models(df: pd.DataFrame) -> list[str]:
 
 
 def create_delta_comparison_plot(exp_data: dict, df_type: str = "lang"):
-    """Create delta comparison plot for experiment data.
+    """Create a delta comparison plot for experiment data.
 
     Args:
         exp_data: Experiment data dictionary containing 'lang', 'competency', 'task' DataFrames
@@ -150,7 +150,7 @@ def create_delta_comparison_plot(exp_data: dict, df_type: str = "lang"):
     model_choices = df_reset["model"].tolist()
     baseline_models = get_baseline_models(df)
 
-    # Default to first baseline if available, otherwise first model
+    # Default to the first baseline if available, otherwise the first model
     default_model = baseline_models[0] if baseline_models else (model_choices[0] if model_choices else "")
 
     delta_dropdown = gr.Dropdown(
@@ -161,7 +161,7 @@ def create_delta_comparison_plot(exp_data: dict, df_type: str = "lang"):
         container=False,
     )
 
-    # Set column widths based on number of columns
+    # Set column widths based on the number of columns
     widths = [330] + [110] * (len(df_reset.columns) - 1)
     column_widths = widths[:len(df_reset.columns)]
 
@@ -218,16 +218,13 @@ def task_performance_tab(exp_data: dict):
         create_delta_comparison_plot(exp_data, "task")
 
 
-def delta_comparison_tab(exp_data: dict):
+def delta_comparison_tab(unused: dict):
     """Create a complete delta comparison tab with sub-tabs for different data types."""
-    with gr.Tab("Delta Comparison"):
-        # Define the sub-tab structure
-        delta_sub_tabs = [
-            language_performance_tab,
-            competency_performance_tab,
-            task_performance_tab
-        ]
+    # Define the sub-tab structure
+    delta_sub_tabs = [
+        language_performance_tab,
+        competency_performance_tab,
+        task_performance_tab
+    ]
 
-        # Build the sub-tabs using TabBuilder
-        sub_builder = TabBuilder(delta_sub_tabs)
-        sub_builder.build(exp_data)
+    return TabBuilder(delta_sub_tabs, tab_name="Delta Comparison")

@@ -17,6 +17,23 @@ logging.basicConfig(
 )
 
 
+def extract_step_id(dirname):
+    """Extract step ID from directory name with multiple patterns"""
+    step_id = None
+
+    if 'ba' in dirname:
+        # Handle both *ba20000 and xxx_ba20000 formats
+        step_id = int(dirname.split('ba')[1].split('_')[0]) if 'ba' in dirname else None
+    elif 'step=' in dirname:
+        # Handle step= followed by number: step=1000, prefix_step=2000, etc.
+        import re
+        # Look for 'step=' followed by digits
+        match = re.search(r'step=(\d+)', dirname)
+        if match:
+            step_id = int(match.group(1))
+
+    return step_id if step_id is not None else 0
+
 def find_result_files(root_dir, conditions:List[tuple] = None, identifier:str=None):
     """
     Find all bhasa result files based on path conditions.
@@ -126,11 +143,8 @@ def en_reports(result_files: List[str], job_name: Optional[str] = None) -> Dict[
         # Use provided job_name if available, otherwise extract from path
         current_job_name = job_name if job_name is not None else path_parts[-3]
         dirname = os.path.basename(os.path.dirname(result_file))
-        if 'ba' in dirname:
-            # Handle both *ba20000 and xxx_ba20000 formats
-            step_id = int(dirname.split('ba')[1].split('_')[0]) if 'ba' in dirname else None
-        else:
-            step_id = 0
+
+        step_id = extract_step_id(dirname)
         step_id = str(int(step_id)).zfill(n_digits)   # e.g. 02357
         model_name = f"{current_job_name}_{step_id}"
 
@@ -285,10 +299,8 @@ def bhasa_reports(result_files: List[str], job_name: Optional[str] = None) -> Di
         # Use provided job_name if available, otherwise extract from path
         current_job_name = job_name if job_name is not None else path_parts[-3]
         dirname = os.path.basename(os.path.dirname(result_file))
-        if 'ba' in dirname:
-            step_id = int(dirname.split('ba')[1].split('_')[0]) if 'ba' in dirname else None
-        else:
-            step_id = 0
+
+        step_id = extract_step_id(dirname)
         step_id = str(int(step_id)).zfill(n_digits)   # e.g. 02357
         model_name = f"{current_job_name}_{step_id}"
 
@@ -502,7 +514,7 @@ def main():
     bhasa_files = find_result_files(bhasa_root_dir, bhasa_conditions)
     en_files = find_result_files(en_root_dir, en_conditions)
 
-    # apply aggregation, obtain reports, a dictionary of hierarchical_level : dataframe
+    # apply aggregation, get reports, a dictionary of hierarchical_level : dataframe
     bhasa_reports = aggregate(bhasa_files, "bhasa", job_name=job_name)
     print(bhasa_reports)
     print("Bhasa aggregation completed")

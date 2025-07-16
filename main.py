@@ -60,7 +60,7 @@ def get_experiments_only(results):
             if not k.startswith('BASELINE_') and not v.get('_meta', {}).get('is_baseline', False)}
 
 
-def create_experiment_tab_function(exp_name, exp_data, tab_structure):
+def experiment_tab(exp_name, exp_data, tab_structure):
     """Factory function that returns a tab function for a specific experiment"""
     def experiment_tab_func(unused, shared_state=None):
         with gr.Tab(exp_name):
@@ -82,7 +82,7 @@ def create_main_tabs(results_dict: dict[str, dict[str, DataFrame]],):
     ]
     experiments = get_experiments_only(results_dict)
     experiment_tabs = [
-        create_experiment_tab_function(exp_name, exp_data, experiment_tab_structure)
+        experiment_tab(exp_name, exp_data, experiment_tab_structure)
         for exp_name, exp_data in experiments.items()
     ]
     main_builder = TabBuilder(experiment_tabs)
