@@ -1,6 +1,7 @@
 from pandas import DataFrame
 
 from leaderboard_v2.constants.text_blobs import ABOUT_SEAHELM, ADDITIONAL_INFORMATION, ABOUT_AISG, SCORE_CALCULATION
+from leaderboard_v2.plots.comparison_tab import comparison_tab
 from leaderboard_v2.plots.contour_plot import contour_plot_tab
 
 from .plots.pareto_plot import pareto_plot_tab
@@ -60,19 +61,6 @@ def get_experiments_only(results):
             if not k.startswith('BASELINE_') and not v.get('_meta', {}).get('is_baseline', False)}
 
 
-def experiment_tab(exp_name, exp_data, tab_structure):
-    """Factory function that returns a tab function for a specific experiment"""
-    def experiment_tab_func(unused, shared_state=None):
-        with gr.Tab(exp_name):
-            filtered_data = {k: v for k, v in list(exp_data.items())[:-1]}
-            cleaned_data = clean_column_names(filtered_data)
-
-            builder = TabBuilder(tab_structure)
-            builder.build(cleaned_data)
-
-    return experiment_tab_func
-
-
 def create_main_tabs(results_dict: dict[str, dict[str, DataFrame]],):
     experiment_tab_structure = [
         delta_comparison_tab,
@@ -81,11 +69,20 @@ def create_main_tabs(results_dict: dict[str, dict[str, DataFrame]],):
         contour_plot_tab
     ]
     experiments = get_experiments_only(results_dict)
-    experiment_tabs = [
-        experiment_tab(exp_name, exp_data, experiment_tab_structure)
-        for exp_name, exp_data in experiments.items()
-    ]
-    main_builder = TabBuilder(experiment_tabs)
+    experiment_tabs = []
+
+    for exp_name, exp_data in experiments.items():
+        filtered_data = {k: v for k, v in exp_data.items() if k != '_meta'}
+        cleaned_data = clean_column_names(filtered_data)
+        experiment_tab = TabBuilder(
+            data=cleaned_data,
+            tabs=experiment_tab_structure,
+            tab_name=exp_name
+        )
+        experiment_tabs.append(experiment_tab)
+
+    all_tabs = experiment_tabs + [comparison_tab(results_dict)]
+    main_builder = TabBuilder(all_tabs)
     main_builder.build()
 
 def create_gradio_app(results_dict):
