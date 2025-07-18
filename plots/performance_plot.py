@@ -4,7 +4,6 @@ from plotly.graph_objs import Figure
 import gradio as gr
 from typing import List
 import re
-from .utils import flatten, group_by_experiment
 
 
 def extract_training_duration(model_name):

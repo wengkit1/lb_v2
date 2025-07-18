@@ -3,7 +3,7 @@ import gradio as gr
 
 
 class TabBuilder:
-    """Tab builder that builds list of tab which are tab builders or tab functions"""
+    """Tab builder that builds a list of tabs which are tab builders or tab functions"""
 
     def __init__(self, tabs: List[Union[Callable, 'TabBuilder']],
                  data: Optional[dict[str, Any]] = None,
@@ -35,12 +35,6 @@ class TabBuilder:
                     merged_state = {**self.shared_state, **tab.shared_state}
                     tab.shared_state = merged_state
                     tab.build(data)
-                elif callable(tab):
-                    import inspect
-                    sig = inspect.signature(tab)
-                    params = list(sig.parameters.keys())
 
-                    if len(params) >= 2:
-                        tab(data, self.shared_state)
-                    else:
-                        tab(data)
+                elif callable(tab):
+                    tab(data, self.shared_state)

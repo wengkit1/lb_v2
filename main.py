@@ -6,7 +6,7 @@ from leaderboard_v2.plots.contour_plot import contour_plot_tab
 
 from .plots.pareto_plot import pareto_plot_tab
 from .plots.table_view import table_view
-from .plots.delta_comparison import delta_comparison_tab
+from .plots.delta_comparison import delta_comparison_plot_tab
 
 from leaderboard_v2.utils import process_runs, load_config, TabBuilder
 
@@ -40,7 +40,6 @@ def clean_column_names(df_dict: dict[str, DataFrame]):
                 if '_' in col:
                     lang_code, rest = col.split('_', 1)
                     if lang_code in columns:
-                        # Replace language code with full name
                         new_col = f"{columns[lang_code]}_{rest}"
                         column_mapping[col] = new_col
                     else:
@@ -61,9 +60,9 @@ def get_experiments_only(results):
             if not k.startswith('BASELINE_') and not v.get('_meta', {}).get('is_baseline', False)}
 
 
-def create_main_tabs(results_dict: dict[str, dict[str, DataFrame]],):
+def create_main_tabs(results_dict: dict[str, dict[str, DataFrame]]):
     experiment_tab_structure = [
-        delta_comparison_tab,
+        delta_comparison_plot_tab,
         table_view,
         pareto_plot_tab,
         contour_plot_tab

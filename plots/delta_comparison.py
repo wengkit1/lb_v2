@@ -1,7 +1,11 @@
+from typing import Dict
+
 import gradio as gr
 import matplotlib.pyplot as plt
 import pandas as pd
 from ..utils import TabBuilder
+from .utils import model_selector, model_selector_for_experiment
+
 
 def style_delta_df(
         original_df: pd.DataFrame,
@@ -10,10 +14,10 @@ def style_delta_df(
         bold_models=True,
         exclude_columns: list[str] | None = None,
 ):
-    """style DataFrame for delta comparison.
+    """Style DataFrame for delta comparison.
 
     Args:
-        original_df (pandas.DataFrame): DataFrame to style.
+        original_df (pandas.DataFrame): DataFrame to style with model names as index.
         delta_model (str): Name of the model used for delta comparison.
         precision (int, optional): Number precision. defaults to 1.
         bold_models (bool, optional): Whether to bold the delta model. defaults to True.
@@ -26,72 +30,83 @@ def style_delta_df(
     if exclude_columns is None:
         exclude_columns = []
 
-    delta_df = original_df.copy()
+    delta_df = original_df.reset_index()
 
-    # Get numeric columns excluding specified ones
     delta_columns = [
         col
         for col in delta_df.select_dtypes(include="number").columns
-        if col not in exclude_columns
+        if col not in exclude_columns and col != 'model'
     ]
 
     # Calculate deltas
     for col in delta_columns:
-        if delta_model not in delta_df.index:
+        if delta_model not in delta_df['model'].values:
             delta_df[col] = pd.Series([pd.NA] * len(delta_df))
         else:
-            baseline_value = delta_df.loc[delta_model, col]
+            baseline_value = delta_df[delta_df['model'] == delta_model][col].iloc[0]
             delta_df[col] = delta_df[col] - baseline_value
 
     def styling_fn(styler):
-        cmap = plt.get_cmap("PiYG")
+        cmap = plt.get_cmap('PiYG')
         cmap.set_bad("white", 1.0)
 
         for col in delta_columns:
             if delta_df[col].notna().any():
                 max_value = max(abs(delta_df[col].max()), abs(delta_df[col].min()))
                 if max_value > 0:
-                    styler.background_gradient(
-                        cmap=cmap,
-                        vmin=-max_value,
-                        vmax=max_value,
-                        subset=pd.IndexSlice[
-                            delta_df.index[delta_df.index != delta_model], col
-                        ],
-                    )
+                    non_baseline_mask = delta_df['model'] != delta_model
+                    if non_baseline_mask.any():
+                        styler.background_gradient(
+                            cmap=cmap,
+                            vmin=-max_value,
+                            vmax=max_value,
+                            subset=pd.IndexSlice[
+                                delta_df.index[non_baseline_mask], col
+                            ],
+                        )
 
         if bold_models:
-            bolded_models = [delta_model]
+            # Bold the baseline model row
+            baseline_mask = delta_df['model'] == delta_model
+            if baseline_mask.any():
+                styler.set_properties(
+                    **{"font-weight": "bold"},
+                    subset=pd.IndexSlice[
+                           delta_df.index[baseline_mask], :
+                           ],
+                )
+
+        # Set baseline model background to white
+        baseline_mask = delta_df['model'] == delta_model
+        if baseline_mask.any():
             styler.set_properties(
-                **{"font-weight": "bold"},
+                **{"background-color": "white", "color": "black"},
                 subset=pd.IndexSlice[
-                       delta_df.index[delta_df.index.isin(bolded_models)], :
-                       ],
+                    delta_df.index[baseline_mask],
+                    delta_columns,
+                ],
             )
 
-        styler.set_properties(
-            **{"background-color": "white", "color": "black"},
-            subset=pd.IndexSlice[
-                delta_df.index[delta_df.index == delta_model],
-                delta_columns,
-            ],
-        )
-
         # Format the numbers
-        styler.format(
-            lambda x: "{:+,.1f}".format(x) if pd.notna(x) else "-",
-            na_rep="-",
-            subset=pd.IndexSlice[
-                delta_df.index[delta_df.index != delta_model], delta_columns
-            ],
-        )
-        styler.format(
-            na_rep="-",
-            precision=precision,
-            subset=pd.IndexSlice[
-                delta_df.index[delta_df.index == delta_model], delta_columns
-            ],
-        )
+        non_baseline_mask = delta_df['model'] != delta_model
+        if non_baseline_mask.any():
+            styler.format(
+                lambda x: "{:+,.1f}".format(x) if pd.notna(x) else "-",
+                na_rep="-",
+                subset=pd.IndexSlice[
+                    delta_df.index[non_baseline_mask], delta_columns
+                ],
+            )
+
+        baseline_mask = delta_df['model'] == delta_model
+        if baseline_mask.any():
+            styler.format(
+                na_rep="-",
+                precision=precision,
+                subset=pd.IndexSlice[
+                    delta_df.index[baseline_mask], delta_columns
+                ],
+            )
 
         return styler
 
@@ -99,13 +114,13 @@ def style_delta_df(
 
     # Restore original values for the baseline model
     if delta_model in original_df.index:
-        def insert_original_values(row):
-            if row.name == delta_model:
-                return original_df.loc[delta_model]
-            else:
-                return row
-
-        style.data = style.data.apply(insert_original_values, axis=1)
+        baseline_mask = delta_df['model'] == delta_model
+        if baseline_mask.any():
+            baseline_idx = delta_df.index[baseline_mask][0]
+            for col in delta_columns:
+                if col in original_df.columns:
+                    original_value = original_df.loc[delta_model, col]
+                    style.data.iloc[baseline_idx, style.data.columns.get_loc(col)] = original_value
 
     return style
 
@@ -122,52 +137,38 @@ def get_baseline_models(df: pd.DataFrame) -> list[str]:
     return [model for model in df.index if model.startswith('BASELINE_')]
 
 
-def create_delta_comparison_plot(exp_data: dict, df_type: str = "lang"):
+def create_delta_comparison_plot(df: pd.DataFrame, shared_state: Dict):
     """Create a delta comparison plot for experiment data.
 
     Args:
-        exp_data: Experiment data dictionary containing 'lang', 'competency', 'task' DataFrames
-        df_type: Which DataFrame to use ('lang', 'competency', or 'task')
+        df: DataFrame to create delta comparison for
+        shared_state: Shared state containing model selector components
     """
-    # Get the specified DataFrame
-    df = exp_data.get(df_type, pd.DataFrame())
-
     if df.empty:
         gr.Markdown("No data available for delta comparison")
         return
 
-    # Reset index to make model names a column for compatibility
-    df_reset = df.reset_index()
+    # Get the shared model dropdown from shared_state
+    delta_dropdown = shared_state.get('model_choice_dropdown')
 
-    # Ensure we have a 'model' column
-    if 'model' not in df_reset.columns and df.index.name:
-        df_reset = df_reset.rename(columns={df.index.name: 'model'})
-    elif 'model' not in df_reset.columns:
-        df_reset.insert(0, 'model', df.index)
+    if not delta_dropdown:
+        gr.Markdown("Model selector not available")
+        return
 
-    gr.Markdown("Select model for delta comparison")
+    # DON'T create a new dropdown - use the existing one from shared_state
+    # The dropdown should already be rendered in the parent tab context
 
-    model_choices = df_reset["model"].tolist()
+    # Get models for this specific DataFrame
+    model_choices = df.index.tolist()
     baseline_models = get_baseline_models(df)
-
-    # Default to the first baseline if available, otherwise the first model
     default_model = baseline_models[0] if baseline_models else (model_choices[0] if model_choices else "")
 
-    delta_dropdown = gr.Dropdown(
-        choices=model_choices,
-        value=default_model,
-        label="Select model for delta comparison",
-        interactive=True,
-        container=False,
-    )
-
     # Set column widths based on the number of columns
-    widths = [330] + [110] * (len(df_reset.columns) - 1)
-    column_widths = widths[:len(df_reset.columns)]
+    widths = [330] + [110] * len(df.columns)
+    column_widths = widths
 
-    # Initial styled dataframe (convert back to indexed format for styling)
-    df_for_styling = df_reset.set_index('model')
-    initial_styled_df = style_delta_df(df_for_styling, default_model)
+    # Initial styled dataframe using the default model
+    initial_styled_df = style_delta_df(df, default_model)
 
     df_display = gr.DataFrame(
         initial_styled_df,
@@ -177,14 +178,12 @@ def create_delta_comparison_plot(exp_data: dict, df_type: str = "lang"):
 
     def update_delta_table(selected_model):
         if not selected_model:
-            return df_reset
-
-        # Convert to indexed format for styling
-        df_for_styling = df_reset.set_index('model')
-        styled_df = style_delta_df(df_for_styling, selected_model)
+            return df
+        styled_df = style_delta_df(df, selected_model)
         return styled_df
 
-    delta_dropdown.input(
+    # Connect the existing shared dropdown to this dataframe
+    delta_dropdown.change(
         fn=update_delta_table,
         inputs=[delta_dropdown],
         outputs=[df_display],
@@ -193,38 +192,47 @@ def create_delta_comparison_plot(exp_data: dict, df_type: str = "lang"):
     gr.Markdown(
         """
         **Delta Comparison**: Shows the difference between each model and the selected baseline model.
-        - Green cells indicate better performance than baseline
-        - Red cells indicate worse performance than baseline  
+        - Greener cells indicate better performance than baseline
+        - Redder cells indicate worse performance than baseline  
         - The baseline model row shows original values (not deltas)
         """
     )
 
 
-def language_performance_tab(exp_data: dict):
+def language_performance_tab(exp_data: Dict, shared_state):
     """Language-level comparison tab"""
     with gr.Tab("Language"):
-        create_delta_comparison_plot(exp_data, "lang")
+        df_lang = exp_data.get("lang", pd.DataFrame())
+        create_delta_comparison_plot(df_lang, shared_state=shared_state)
 
 
-def competency_performance_tab(exp_data: dict):
+def competency_performance_tab(exp_data: Dict, shared_state):
     """Competency-level comparison tab"""
     with gr.Tab("Competency"):
-        create_delta_comparison_plot(exp_data, "competency")
+        df_competency = exp_data.get("competency", pd.DataFrame())
+        create_delta_comparison_plot(df_competency, shared_state=shared_state)
 
 
-def task_performance_tab(exp_data: dict):
+def task_performance_tab(exp_data: Dict, shared_state):
     """Task-level comparison tab"""
     with gr.Tab("Task"):
-        create_delta_comparison_plot(exp_data, "task")
+        df_task = exp_data.get("task", pd.DataFrame())
+        create_delta_comparison_plot(df_task, shared_state=shared_state)
 
+def delta_comparison_plot_tab(exp_data: Dict, shared_state: Dict):
+    """Delta comparison tab"""
+    with gr.Tab("Delta Comparison"):
+        shared_state = {}
+        model_selector_for_experiment(exp_data, shared_state)
 
-def delta_comparison_tab(unused: dict):
-    """Create a complete delta comparison tab with sub-tabs for different data types."""
-    # Define the sub-tab structure
-    delta_sub_tabs = [
-        language_performance_tab,
-        competency_performance_tab,
-        task_performance_tab
-    ]
+        gr.Markdown("Select model for delta comparison")
+        shared_state.get('model_choice_dropdown')
 
-    return TabBuilder(delta_sub_tabs, tab_name="Delta Comparison")
+        delta_sub_tabs = [
+            language_performance_tab,
+            competency_performance_tab,
+            task_performance_tab
+        ]
+
+        delta_builder = TabBuilder(tabs=delta_sub_tabs, shared_state=shared_state)
+        delta_builder.build(exp_data)

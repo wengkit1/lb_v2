@@ -2,7 +2,7 @@ import gradio as gr
 from gradio_leaderboard import Leaderboard, SelectColumns, SearchColumns
 from pandas.core.interchange.dataframe_protocol import DataFrame
 
-from .utils import create_shared_components
+from .utils import model_selector
 from ..utils import TabBuilder
 from typing import Dict
 from .performance_plot import performance_plot_tab
@@ -56,7 +56,7 @@ def comparison_table_plot(flattened_df: DataFrame, shared_state: Dict = None):
     return table_plot_func
 
 
-def comparison_table_tab(data, shared_state):
+def comparison_table_tab(unused, shared_state):
     """Table comparison tab that uses shared state"""
     with gr.Tab("Select & Compare"):
         # Get shared components
@@ -112,18 +112,16 @@ def comparison_table_tab(data, shared_state):
 def comparison_tab(results: Dict):
     """Main comparison tab function that works with TabBuilder"""
 
-    def comparison_tab_func(data: Dict = None):
+    def comparison_tab_func(*args):
         with gr.Tab("Comparison"):
             shared_state = {}
-
-            create_shared_components(results, shared_state)
-
+            model_selector(results, shared_state)
             tabs = [
                 comparison_table_tab,
                 performance_plot_tab
             ]
 
             builder = TabBuilder(tabs=tabs, shared_state=shared_state)
-            builder.build(data)
+            builder.build()
 
     return comparison_tab_func

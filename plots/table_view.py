@@ -3,6 +3,7 @@ from pandas import DataFrame
 from gradio_leaderboard import Leaderboard, SelectColumns, SearchColumns, ColumnFilter
 from ..utils import TabBuilder
 
+
 def group_columns_by_language(df: DataFrame):
     """Group columns by language prefix."""
     lang_groups = {}
@@ -37,7 +38,7 @@ def group_columns_by_language(df: DataFrame):
 def create_single_language_tab(lang_name, lang_cols, df_display: DataFrame):
     """Create a single language tab with filtered columns."""
 
-    def language_tab_func(data, shared_state):
+    def language_tab_func(data, *args):  # Use *args for flexible parameters
         with gr.Tab(lang_name):
             # Filter to model column + language-specific columns
             subset_cols = ['model'] + lang_cols
@@ -79,9 +80,9 @@ def create_single_language_tab(lang_name, lang_cols, df_display: DataFrame):
 
 
 def create_language_breakdown_tab(df_display: DataFrame, lang_groups):
-    """Create language breakdown tab with nested language tabs."""
+    """Create a language breakdown tab with nested language tabs."""
 
-    def language_breakdown_func(unused):
+    def language_breakdown_func(data, *args):  # Use *args for flexible parameters
         language_tab_functions = []
         for lang_name, lang_cols in lang_groups.items():
             tab_func = create_single_language_tab(lang_name, lang_cols, df_display)
@@ -89,12 +90,12 @@ def create_language_breakdown_tab(df_display: DataFrame, lang_groups):
 
         # Use TabBuilder for nested language tabs
         language_builder = TabBuilder(language_tab_functions)
-        language_builder.build({})
+        language_builder.build(data)
 
     return language_breakdown_func
 
 
-def overall_tab(exp_data: dict):
+def overall_tab(exp_data: dict, *args):  # Use *args for flexible parameters
     with gr.Tab("Overall"):
         df = exp_data.get('lang', None)
         if df is None or df.empty:
@@ -132,7 +133,7 @@ def overall_tab(exp_data: dict):
         )
 
 
-def competency_tab(exp_data: dict = None):
+def competency_tab(exp_data: dict, *args):
     df = exp_data.get('competency')
     with gr.Tab("Competency"):
         if df is None or df.empty:
@@ -148,10 +149,10 @@ def competency_tab(exp_data: dict = None):
 
         # Create language breakdown with nested tabs
         breakdown_tab = create_language_breakdown_tab(df_display, lang_groups)
-        breakdown_tab({})
+        breakdown_tab(exp_data, *args)  # Pass along any additional args
 
 
-def task_tab(exp_data: dict = None):
+def task_tab(exp_data: dict, *args):
     with gr.Tab("Task"):
         df = exp_data.get('task')
         if df is None or df.empty:
@@ -167,10 +168,10 @@ def task_tab(exp_data: dict = None):
 
         # Create language breakdown with nested tabs
         breakdown_tab = create_language_breakdown_tab(df_display, lang_groups)
-        breakdown_tab({})
+        breakdown_tab(exp_data, *args)
 
 
-def table_view(exp_data):
+def table_view(exp_data, *args):
     """Main table view tab with overall, competency, and task breakdowns."""
     table_sub_tabs = [
         overall_tab,
@@ -178,4 +179,4 @@ def table_view(exp_data):
         task_tab
     ]
     for tab_func in table_sub_tabs:
-        tab_func(exp_data)
+        tab_func(exp_data, *args)
