@@ -76,6 +76,7 @@ def create_main_tabs(results_dict: dict[str, dict[str, DataFrame]]):
     for exp_name, exp_data in experiments.items():
         filtered_data = {k: v for k, v in exp_data.items() if k != '_meta'}
         cleaned_data = clean_column_names(filtered_data)
+        cleaned_data['_meta'] = exp_data.get('_meta', {})
         experiment_tab = TabBuilder(
             data=cleaned_data,
             tabs=experiment_tab_structure,
