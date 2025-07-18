@@ -2,7 +2,7 @@ import gradio as gr
 from gradio_leaderboard import Leaderboard, SelectColumns, SearchColumns
 from pandas.core.interchange.dataframe_protocol import DataFrame
 
-from .utils import model_selector
+from .plot_utils import model_selector
 from ..utils import TabBuilder
 from typing import Dict
 from .performance_plot import performance_plot_tab

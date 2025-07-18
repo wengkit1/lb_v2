@@ -2,49 +2,18 @@ import gradio as gr
 from pandas import DataFrame
 from gradio_leaderboard import Leaderboard, SelectColumns, SearchColumns, ColumnFilter
 from ..utils import TabBuilder
-
-
-def group_columns_by_language(df: DataFrame):
-    """Group columns by language prefix."""
-    lang_groups = {}
-    # Since names are already cleaned, we look for the actual language names
-    lang_order = ['English', 'Indonesian', 'Vietnamese', 'Thai', 'Tamil', 'Tagalog']
-
-    # Initialize with empty lists
-    for lang in lang_order:
-        lang_groups[lang] = []
-
-    for col in df.columns:
-        if col == 'model':
-            continue
-
-        # Check if column starts with language name
-        lang_prefix = None
-        for lang_name in lang_order:
-            if col.startswith(f'{lang_name}_'):
-                lang_prefix = lang_name
-                break
-
-        if lang_prefix:
-            lang_groups[lang_prefix].append(col)
-        else:
-            # Default to 'English' for columns without language prefix
-            lang_groups['English'].append(col)
-
-    # Return only languages that have columns
-    return {lang: cols for lang, cols in lang_groups.items() if cols}
+from .plot_utils import group_columns_by_language
 
 
 def create_single_language_tab(lang_name, lang_cols, df_display: DataFrame):
     """Create a single language tab with filtered columns."""
 
-    def language_tab_func(data, *args):  # Use *args for flexible parameters
+    def language_tab_func(data, *args):
         with gr.Tab(lang_name):
             # Filter to model column + language-specific columns
             subset_cols = ['model'] + lang_cols
             lang_df = df_display[subset_cols].copy()
 
-            # Clean column names by removing language prefix
             clean_cols = {}
             for col in lang_cols:
                 clean_name = col.replace(f'{lang_name}_', '', 1)

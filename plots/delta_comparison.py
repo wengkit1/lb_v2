@@ -4,7 +4,7 @@ import gradio as gr
 import matplotlib.pyplot as plt
 import pandas as pd
 from ..utils import TabBuilder
-from .utils import model_selector, model_selector_for_experiment
+from .plot_utils import model_selector, model_selector_for_experiment
 
 
 def style_delta_df(

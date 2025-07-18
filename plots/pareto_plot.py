@@ -1,87 +1,8 @@
 import gradio as gr
 import pandas as pd
 import plotly.graph_objects as go
-import re
-from typing import Dict, List
-
-
-def extract_hyperparameters(model_name: str) -> Dict:
-    """Extract hyperparameters from model names."""
-    hps = {}
-
-    # Datamix pattern: n4-g8-en_ratio0.1-cc_ratio0.1-code_ratio0.1
-    datamix_patterns = [
-        r'en_ratio([\d.]+)',
-        r'cc_ratio([\d.]+)',
-        r'code_ratio([\d.]+)',
-        r'hq_ratio([\d.]+)'
-    ]
-
-    for pattern in datamix_patterns:
-        match = re.search(pattern, model_name)
-        if match:
-            param_name = pattern.split('(')[0].replace('_ratio', '_ratio')
-            hps[param_name] = float(match.group(1))
-
-    # HPS-sweep pattern: hps-sweep_smc_gemma-3-4b-it_SEQLEN8192_MBS4_N4_FULL_SHARD_LR1e-4_GBS1024_DUR20e9tok_LIGER1_WD1e-5
-    hps_patterns = [
-        (r'LR([\de.-]+)', 'LR'),
-        (r'GBS(\d+)', 'GBS'),
-    ]
-
-    for pattern, param_name in hps_patterns:
-        match = re.search(pattern, model_name)
-        if match:
-            try:
-                if 'e' in match.group(1) or '.' in match.group(1):
-                    hps[param_name] = float(match.group(1))
-                else:
-                    hps[param_name] = int(match.group(1))
-            except ValueError:
-                hps[param_name] = match.group(1)
-
-    return hps
-
-
-def get_all_metrics(exp_data: Dict) -> List[str]:
-    """Get all available metrics from lang, competency, and task dataframes."""
-    all_metrics = []
-
-    # From lang dataframe
-    if 'lang' in exp_data and not exp_data['lang'].empty:
-        lang_cols = [col for col in exp_data['lang'].columns if col != 'model']
-        all_metrics.extend(lang_cols)
-
-    # From competency dataframe
-    if 'competency' in exp_data and not exp_data['competency'].empty:
-        comp_cols = [col for col in exp_data['competency'].columns if col != 'model']
-        all_metrics.extend(comp_cols)
-
-    # From task dataframe
-    if 'task' in exp_data and not exp_data['task'].empty:
-        task_cols = [col for col in exp_data['task'].columns if col != 'model']
-        all_metrics.extend(task_cols)
-
-    return sorted(list(set(all_metrics)))
-
-
-def combine_dataframes(exp_data: Dict) -> pd.DataFrame:
-    """Combine all dataframes into one with all metrics."""
-    combined_df = None
-
-    for df_name in ['lang', 'competency', 'task']:
-        if df_name in exp_data and not exp_data[df_name].empty:
-            df = exp_data[df_name].reset_index()
-            if 'model' not in df.columns:
-                df['model'] = df.index
-
-            if combined_df is None:
-                combined_df = df
-            else:
-                combined_df = pd.merge(combined_df, df, on='model', how='outer')
-
-    return combined_df
-
+from typing import Dict
+from .plot_utils import combine_dataframes, extract_hyperparameters, get_all_metrics
 
 def calculate_pareto_front(df: pd.DataFrame, x_col: str, y_col: str) -> pd.DataFrame:
     """Calculate Pareto front (non-dominated points)."""

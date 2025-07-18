@@ -7,11 +7,13 @@ from leaderboard_v2.plots.contour_plot import contour_plot_tab
 from .plots.pareto_plot import pareto_plot_tab
 from .plots.table_view import table_view
 from .plots.delta_comparison import delta_comparison_plot_tab
+from .plots.competency_selection_view import competency_selection_tab
 
 from leaderboard_v2.utils import process_runs, load_config, TabBuilder
 
 from .constants.constants import LANGUAGE_NAMES
 import gradio as gr
+
 slider_css = """
         .gradio-container .form {
             overflow-y: auto !important;
@@ -65,7 +67,8 @@ def create_main_tabs(results_dict: dict[str, dict[str, DataFrame]]):
         delta_comparison_plot_tab,
         table_view,
         pareto_plot_tab,
-        contour_plot_tab
+        contour_plot_tab,
+        competency_selection_tab
     ]
     experiments = get_experiments_only(results_dict)
     experiment_tabs = []
