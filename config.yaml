@@ -1,23 +1,11 @@
 experiments:
-#  g3_datamix_1b:
-#    path: "reports/results/g3_datamix_1b"
-#    en_conditions:
-#      - ["*", null]
-#      - ["*", null]
-#      - ["lm-eval*", null]
-#
-#    bhasa_conditions:
-#      - ["*", "*[0-9].[0-9]*"]
-#      - ["*", null]
-#      - ["*seahelm*", null]
-
   g3_datamix_4b:
     path: "reports/results/g3_datamix_4b"
 
   baselines:
     gemma-3-1b:
       path: "reports/results/gemma-3-1b-pt"
-      target_experiments: [0, 1]
+      target_experiments: [0]
 
 hero_runs:
   gemma3_herorun:
