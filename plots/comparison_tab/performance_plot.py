@@ -1,25 +1,11 @@
+import gradio as gr
 import pandas as pd
 import plotly.express as px
-from plotly.graph_objs import Figure
-import gradio as gr
-from typing import List, Dict
 import re
 
+from plotly.graph_objs import Figure
+from typing import List, Dict
 
-def extract_training_duration(model_name):
-    """Extract training duration from model name - tries common patterns in order"""
-    patterns = [
-        r'^(\d+)',  # Number at start
-        r'_(\d+)$',  # Number after the last underscore
-        r'(\d+)',  # First number found anywhere
-    ]
-
-    for pattern in patterns:
-        match = re.search(pattern, model_name)
-        if match:
-            return int(match.group(1))
-
-    return 0
 
 def create_performance_plot(df_grouped: pd.DataFrame, selected_models: List[str] = None) -> Figure:
     """Create a performance plot colored by training duration"""
@@ -40,7 +26,9 @@ def create_performance_plot(df_grouped: pd.DataFrame, selected_models: List[str]
         return fig
 
     # Extract training duration
-    df_filtered['training_duration'] = df_filtered['model'].apply(extract_training_duration)
+    df_filtered['training_duration'] = df_filtered['model'].apply(
+        lambda model_name: int(re.search(r'_(\d+)$', model_name).group(1))
+    )
 
     # Prepare data for plotting
     df_plot = df_filtered.copy()

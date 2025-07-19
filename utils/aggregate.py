@@ -19,20 +19,19 @@ logging.basicConfig(
 
 def extract_step_id(dirname):
     """Extract step ID from directory name with multiple patterns"""
-    step_id = None
+    step_id = 0
+    patterns = [
+        r'ba(\d+)',  # ba followed by number
+        r'step=(\d+)',  # step= followed by number
+    ]
 
-    if 'ba' in dirname:
-        # Handle both *ba20000 and xxx_ba20000 formats
-        step_id = int(dirname.split('ba')[1].split('_')[0]) if 'ba' in dirname else None
-    elif 'step=' in dirname:
-        # Handle step= followed by number: step=1000, prefix_step=2000, etc.
-        import re
-        # Look for 'step=' followed by digits
-        match = re.search(r'step=(\d+)', dirname)
+    import re
+    for pattern in patterns:
+        match = re.search(pattern, dirname)
         if match:
             step_id = int(match.group(1))
 
-    return step_id if step_id is not None else 0
+    return step_id
 
 def find_result_files(root_dir, conditions:List[tuple] = None, identifier:str=None):
     """
@@ -125,16 +124,13 @@ def en_reports(result_files: List[str], job_name: Optional[str] = None) -> Dict[
     competency_results = {}
     task_results = {}
 
-    # Get the maximum number of digits from all step IDs
-    all_step_ids = []
+    max_digits = 5
     for f in result_files:
         dirname = os.path.basename(os.path.dirname(f))
-        if 'ba' in dirname:
-            # Handle both *ba20000 and xxx_ba20000 formats
-            step_id = int(dirname.split('ba')[1].split('_')[0]) if 'ba' in dirname else None
-            all_step_ids.append(int(step_id))
+        step_id = extract_step_id(dirname)
 
-    n_digits = len(str(max(all_step_ids))) if all_step_ids else 5
+        if len(str(step_id)) > max_digits:
+            max_digits = len(str(step_id))
 
     # Process each result file
     for result_file in result_files:
@@ -143,9 +139,8 @@ def en_reports(result_files: List[str], job_name: Optional[str] = None) -> Dict[
         # Use provided job_name if available, otherwise extract from path
         current_job_name = job_name if job_name is not None else path_parts[-3]
         dirname = os.path.basename(os.path.dirname(result_file))
-
         step_id = extract_step_id(dirname)
-        step_id = str(int(step_id)).zfill(n_digits)   # e.g. 02357
+        step_id = str(int(step_id)).zfill(max_digits)   # e.g. 02357
         model_name = f"{current_job_name}_{step_id}"
 
         with open(result_file) as f:
@@ -280,28 +275,23 @@ def bhasa_reports(result_files: List[str], job_name: Optional[str] = None) -> Di
     competency_data = []
     task_data = []
 
-    # Get the maximum number of digits from all step IDs
-    all_step_ids = []
+    max_digits = 5
     for f in result_files:
         dirname = os.path.basename(os.path.dirname(f))
-        if 'ba' in dirname:
-            # Handle both *ba20000 and xxx_ba20000 formats
-            step_id = int(dirname.split('ba')[1].split('_')[0]) if 'ba' in dirname else None
-            all_step_ids.append(int(step_id))
+        step_id = extract_step_id(dirname)
 
-    n_digits = len(str(max(all_step_ids))) if all_step_ids else 5
+        if len(str(step_id)) > max_digits:
+            max_digits = len(str(step_id))
 
     # Process each result file
-    print(len(result_files))
     for result_file in result_files:
         # Get job_name and step_id from path components
         path_parts = result_file.split(os.sep)
         # Use provided job_name if available, otherwise extract from path
         current_job_name = job_name if job_name is not None else path_parts[-3]
         dirname = os.path.basename(os.path.dirname(result_file))
-
         step_id = extract_step_id(dirname)
-        step_id = str(int(step_id)).zfill(n_digits)   # e.g. 02357
+        step_id = str(int(step_id)).zfill(max_digits)   # e.g. 02357
         model_name = f"{current_job_name}_{step_id}"
 
 

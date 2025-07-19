@@ -191,7 +191,6 @@ def model_selector(results: Dict, shared_state: Dict):
     # Create shared components here
     model_choice_dropdown = gr.Dropdown(
         choices=models,
-        value='',
         interactive=True,
         multiselect=True,
         container=False,

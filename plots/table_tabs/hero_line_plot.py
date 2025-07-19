@@ -2,23 +2,6 @@ import gradio as gr
 import plotly.graph_objects as go
 import pandas as pd
 import re
-from typing import Dict
-
-
-def extract_hero_run_number(model_name: str) -> int:
-    """Extract step number from hero run model names."""
-    patterns = [
-        r'_ba(\d+)',  # _ba followed by number
-        r'step=(\d+)',  # step= followed by number
-        r'_(\d+)$',  # _ followed by number at end of string
-        r'_(\d+)_',  # _ followed by number followed by _
-    ]
-
-    for pattern in patterns:
-        match = re.search(pattern, model_name)
-        if match:
-            return int(match.group(1))
-    return 0
 
 
 def hero_line_plot_tab(df: pd.DataFrame, tab_type: str):
@@ -31,7 +14,9 @@ def hero_line_plot_tab(df: pd.DataFrame, tab_type: str):
 
             df_plot = df.copy()
 
-            df_plot['step_number'] = df_plot['model'].apply(extract_hero_run_number)
+            df_plot['step_number'] = df_plot['model'].apply(
+                lambda model_name: int(re.search(r'_(\d+)$', model_name).group(1))
+            )
             df_plot = df_plot.sort_values('step_number')
 
             df_plot = df_plot[~df_plot['model'].str.startswith('BASELINE_')]

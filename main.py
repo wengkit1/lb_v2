@@ -4,9 +4,7 @@ from typing import Dict
 
 from .constants.constants import LANGUAGE_NAMES
 from .constants.text_blobs import ABOUT_SEAHELM, ADDITIONAL_INFORMATION, ABOUT_AISG, SCORE_CALCULATION
-
 from .utils import process_runs, load_config, TabBuilder
-
 from .plots import (comparison_tab, competency_selection_tab, contour_plot_tab,
                     delta_comparison_plot_tab, pareto_plot_tab, table_view)
 
@@ -17,6 +15,7 @@ slider_css = """
         }
         """
 dynamic_average_js = f"function() {{ {open('leaderboard_v2/js/dynamic_averages.js').read()} }}"
+
 
 def clean_column_names(df_dict: Dict[str, DataFrame]):
     """Apply language name mapping to dataframe columns for all parts of df_dict"""
