@@ -1,13 +1,14 @@
 import gradio as gr
-from pandas import DataFrame
+from typing import List, Dict
 from gradio_leaderboard import Leaderboard, SelectColumns, SearchColumns, ColumnFilter
+from pandas import DataFrame
 
 from .hero_line_plot import hero_line_plot_tab
-from ..utils import TabBuilder
-from .plot_utils import group_columns_by_language
+from ..plot_utils import group_columns_by_language
+from ...utils import TabBuilder
 
 
-def create_single_language_tab(lang_name, lang_cols, df_display: DataFrame):
+def create_single_language_tab(lang_name: str, lang_cols: List[str], df_display: DataFrame):
     """Create a single language tab with filtered columns."""
 
     def language_tab_func(data, *args):
@@ -50,7 +51,7 @@ def create_single_language_tab(lang_name, lang_cols, df_display: DataFrame):
     return language_tab_func
 
 
-def language_breakdown_tab(df_display: DataFrame, lang_groups, tab_type, is_hero_run: bool, exp_data: dict):
+def language_breakdown_tab(df_display: DataFrame, lang_groups: Dict, tab_type: str, is_hero_run: bool):
     """Create a language breakdown tab with nested language tabs + hero line plot tab."""
 
     language_tab_functions = []
@@ -71,7 +72,7 @@ def language_breakdown_tab(df_display: DataFrame, lang_groups, tab_type, is_hero
 
 
 
-def overall_tab(exp_data: dict, *args):
+def overall_tab(exp_data: Dict, *args):
     is_hero_run = exp_data.get('_meta', {}).get('is_hero_run', False)
 
     with gr.Tab("Overall"):
@@ -117,7 +118,7 @@ def overall_tab(exp_data: dict, *args):
             hero_plot_func(exp_data)
 
 
-def competency_tab(exp_data: dict, *args):
+def competency_tab(exp_data: Dict, *args):
     df = exp_data.get('competency')
     with gr.Tab("Competency"):
         if df is None or df.empty:
@@ -132,10 +133,10 @@ def competency_tab(exp_data: dict, *args):
             return
 
         is_hero_run = exp_data.get('_meta', {}).get('is_hero_run', False)
-        language_breakdown_tab(df_display, lang_groups, 'competency', is_hero_run, exp_data)
+        language_breakdown_tab(df_display, lang_groups, 'competency', is_hero_run)
 
 
-def task_tab(exp_data: dict, *args):
+def task_tab(exp_data: Dict, *args):
     with gr.Tab("Task"):
         df = exp_data.get('task')
         if df is None or df.empty:
@@ -150,10 +151,10 @@ def task_tab(exp_data: dict, *args):
             return
 
         is_hero_run = exp_data.get('_meta', {}).get('is_hero_run', False)
-        language_breakdown_tab(df_display, lang_groups, 'task', is_hero_run, exp_data)
+        language_breakdown_tab(df_display, lang_groups, 'task', is_hero_run)
 
 
-def table_view(exp_data, *args):
+def table_view(exp_data: Dict, *args):
     """Main table view tab with overall, competency, and task tabs."""
     table_sub_tabs = [
         overall_tab,

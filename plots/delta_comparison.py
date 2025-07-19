@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 
 import gradio as gr
 import matplotlib.pyplot as plt
@@ -12,7 +12,7 @@ def style_delta_df(
         delta_model: str,
         precision=1,
         bold_models=True,
-        exclude_columns: list[str] | None = None,
+        exclude_columns: List[str] | None = None,
 ):
     """Style DataFrame for delta comparison.
 

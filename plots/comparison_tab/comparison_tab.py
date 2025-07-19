@@ -1,11 +1,11 @@
 import gradio as gr
+from typing import Dict
 from gradio_leaderboard import Leaderboard, SelectColumns, SearchColumns
 from pandas.core.interchange.dataframe_protocol import DataFrame
 
-from .plot_utils import model_selector
-from ..utils import TabBuilder
-from typing import Dict
 from .performance_plot import performance_plot_tab
+from ..plot_utils import model_selector
+from ...utils import TabBuilder
 
 
 def comparison_table_plot(flattened_df: DataFrame, shared_state: Dict = None):

@@ -1,18 +1,14 @@
+import gradio as gr
 from pandas import DataFrame
-
-from leaderboard_v2.constants.text_blobs import ABOUT_SEAHELM, ADDITIONAL_INFORMATION, ABOUT_AISG, SCORE_CALCULATION
-from leaderboard_v2.plots.comparison_tab import comparison_tab
-from leaderboard_v2.plots.contour_plot import contour_plot_tab
-
-from .plots.pareto_plot import pareto_plot_tab
-from .plots.table_view import table_view
-from .plots.delta_comparison import delta_comparison_plot_tab
-from .plots.competency_selection_view import competency_selection_tab
-
-from leaderboard_v2.utils import process_runs, load_config, TabBuilder
+from typing import Dict
 
 from .constants.constants import LANGUAGE_NAMES
-import gradio as gr
+from .constants.text_blobs import ABOUT_SEAHELM, ADDITIONAL_INFORMATION, ABOUT_AISG, SCORE_CALCULATION
+
+from .utils import process_runs, load_config, TabBuilder
+
+from .plots import (comparison_tab, competency_selection_tab, contour_plot_tab,
+                    delta_comparison_plot_tab, pareto_plot_tab, table_view)
 
 slider_css = """
         .gradio-container .form {
@@ -22,7 +18,7 @@ slider_css = """
         """
 dynamic_average_js = f"function() {{ {open('leaderboard_v2/js/dynamic_averages.js').read()} }}"
 
-def clean_column_names(df_dict: dict[str, DataFrame]):
+def clean_column_names(df_dict: Dict[str, DataFrame]):
     """Apply language name mapping to dataframe columns for all parts of df_dict"""
 
     cleaned_dict = {}
@@ -56,13 +52,13 @@ def clean_column_names(df_dict: dict[str, DataFrame]):
     return cleaned_dict
 
 
-def get_experiments_only(results):
+def get_experiments_only(results: Dict[str, Dict[str, DataFrame]] = None,):
     """Filter to get only experiments (no baselines)"""
     return {k: v for k, v in results.items()
             if not k.startswith('BASELINE_') and not v.get('_meta', {}).get('is_baseline', False)}
 
 
-def create_main_tabs(results_dict: dict[str, dict[str, DataFrame]]):
+def create_main_tabs(results_dict: Dict[str, Dict[str, DataFrame]]):
     experiment_tab_structure = [
         delta_comparison_plot_tab,
         table_view,
@@ -88,7 +84,7 @@ def create_main_tabs(results_dict: dict[str, dict[str, DataFrame]]):
     main_builder = TabBuilder(all_tabs)
     main_builder.build()
 
-def create_gradio_app(results_dict):
+def create_gradio_app(results_dict: Dict[str, Dict[str, DataFrame]] = None,):
     """Main entry point - create the Gradio app"""
     with gr.Blocks(css=slider_css, js=dynamic_average_js) as demo:
         gr.Markdown("<br>")
@@ -126,14 +122,21 @@ def create_gradio_app(results_dict):
     return demo
 
 
-# Example usage and testing
 if __name__ == "__main__":
-    # Your existing mock results...
-    config = load_config("leaderboard_v2/config.yaml")
+    import argparse
+    parser = argparse.ArgumentParser(description='SEA HELM Evaluation Pipeline')
+    parser.add_argument('--config', default='leaderboard_v2/config.yaml', help='Path to configuration file')
+    parser.add_argument('--port', type=int, default=7060, help='Port to run the evaluation on')
+    parser.add_argument('--no-gui', action='store_true', help='Run aggregation without launching GUI')
+    args = parser.parse_args()
+
+    config = load_config(args.config)
     results = process_runs(config)
 
-    demo = create_gradio_app(results)
-    demo.launch(
-        share=True,
-        favicon_path = "leaderboard_v2/constants/favicon.ico",
+    if not args.no_gui:
+        demo = create_gradio_app(results)
+        demo.launch(
+            server_port=args.port,
+            share=True,
+            favicon_path="leaderboard_v2/constants/favicon.ico",
         )

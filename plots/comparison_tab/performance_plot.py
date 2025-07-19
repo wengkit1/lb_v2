@@ -2,7 +2,7 @@ import pandas as pd
 import plotly.express as px
 from plotly.graph_objs import Figure
 import gradio as gr
-from typing import List
+from typing import List, Dict
 import re
 
 
@@ -105,7 +105,7 @@ def create_performance_plot(df_grouped: pd.DataFrame, selected_models: List[str]
     return fig
 
 
-def performance_plot_tab(unused: dict, shared_state: dict):
+def performance_plot_tab(unused: Dict, shared_state: Dict):
     """Performance plot tab that uses shared state"""
     with gr.Tab("Performance Plot"):
         # Get shared components

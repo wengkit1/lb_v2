@@ -66,7 +66,6 @@ def generate_pareto_plot(exp_data: Dict, x_metric: str, y_metric: str) -> go.Fig
         all_hp_keys.update(hp_dict.keys())
 
     if all_hp_keys:
-        # Use first available hyperparameter for shapes, second for colors
         hp_list = sorted(list(all_hp_keys))
         if len(hp_list) >= 1:
             shape_param = hp_list[0]
