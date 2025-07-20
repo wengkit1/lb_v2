@@ -4,7 +4,7 @@ from typing import Dict, Optional
 import pandas as pd
 import yaml
 
-from leaderboard_v2.utils.aggregate import (
+from .aggregate import (
     find_result_files,
     aggregate,
     merge_reports,

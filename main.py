@@ -4,7 +4,8 @@ from typing import Dict
 
 from .constants.constants import LANGUAGE_NAMES
 from .constants.text_blobs import ABOUT_SEAHELM, ADDITIONAL_INFORMATION, ABOUT_AISG, SCORE_CALCULATION
-from .utils import process_runs, load_config, TabBuilder
+from .utils import TabBuilder
+from .utils.process_config import process_runs, load_config
 from .plots import (comparison_tab, competency_selection_tab, contour_plot_tab,
                     delta_comparison_plot_tab, pareto_plot_tab, table_view)
 
