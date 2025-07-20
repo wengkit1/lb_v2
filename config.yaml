@@ -1,18 +1,18 @@
 experiments:
   g3_datamix_4b:
-    path: "reports/results/g3_datamix_4b"
+    path: "./reports/results/g3_datamix_4b"
 
   baselines:
     gemma-3-1b:
-      path: "reports/results/gemma-3-1b-pt"
+      path: "./reports/results/gemma-3-1b-pt"
       target_experiments: [0]
 
 hero_runs:
   gemma3_herorun:
-    path: "reports/results/g3_4b_herorun_6e-7/herorun_4b"
+    path: "./reports/results/g3_4b_herorun_6e-7/herorun_4b"
   baselines:
     gemma-3-1b:
-      path: "reports/results/gemma-3-1b-pt"
+      path: "./reports/results/gemma-3-1b-pt"
       target_experiments: [0]
 
 

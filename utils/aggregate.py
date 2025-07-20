@@ -6,9 +6,15 @@ import logging
 import os
 import glob
 from fnmatch import fnmatch
-from ..constants.constants import (
-    EnConfig, BhasaConfig,
-)
+
+if __name__.split('.')[0] == "leaderboard_v2":
+    from ..constants.constants import (
+        EnConfig, BhasaConfig
+    )
+else:
+    from constants.constants import (
+        EnConfig, BhasaConfig,
+    )
 
 # Configure logging
 logging.basicConfig(

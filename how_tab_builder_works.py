@@ -41,7 +41,7 @@ with gr.Blocks() as shared_state_demo:
    shared_state = {"shared_state": "We are sharing a dict!"}
    sharing_tabs = TabBuilder(tabs=[shared_tab_a, shared_tab_b],
                              shared_state=shared_state)
-   # note that not naming the tabbuilder object, will create a separate tabs context
+   # note that not naming the tabbuilder object will create a separate tabs context
    # which would stack them vertically.
    sharing_tabs_named = TabBuilder(tabs=[shared_tab_a, shared_tab_b],
                              shared_state=shared_state, tab_name="shared_tabs")

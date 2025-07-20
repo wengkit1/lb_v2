@@ -2,7 +2,8 @@
 
 ## TabBuilder Architecture
 
-The leaderboard uses a `TabBuilder` class to create modular, composable tab structures. This allows for flexible UI construction and shared state management across tabs.
+The leaderboard uses a `TabBuilder` class to create modular, composable tab structures. 
+This allows for flexible UI construction and shared state management across tabs.
 
 ## Core Concepts
 
@@ -295,4 +296,5 @@ def my_tab(exp_data, shared_state=None):
 4. **Named tabs**: Use `tab_name` parameter to wrap content
 5. **Conditional logic**: Check metadata or data before adding tabs
 
-This architecture makes the UI highly modular and allows for complex, interactive dashboards while keeping the code organized and maintainable.
+This architecture makes the UI highly modular and allows for complex, interactive dashboards while keeping the 
+code organized and maintainable, please refer to [how_tab_builder_works.py](./how_tab_builder_works.py) for toy examples.

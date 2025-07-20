@@ -10,10 +10,18 @@ from .aggregate import (
     merge_reports,
     save_reports
 )
-from ..constants.constants import (
-    SEAHELM_FILE_IDENTIFIER,
-    OPENLLM_FILE_IDENTIFIER
-)
+
+if __name__.split('.')[0] == "leaderboard_v2":
+    from ..constants.constants import (
+        SEAHELM_FILE_IDENTIFIER,
+        OPENLLM_FILE_IDENTIFIER
+    )
+else:
+    from constants.constants import (
+        SEAHELM_FILE_IDENTIFIER,
+        OPENLLM_FILE_IDENTIFIER
+    )
+
 
 def load_config(config_path: str = "leaderboard_v2/config.yaml") -> Dict:
     with open(config_path, 'r') as file:
